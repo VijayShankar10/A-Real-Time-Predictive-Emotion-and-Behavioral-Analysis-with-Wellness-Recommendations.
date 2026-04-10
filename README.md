@@ -1,50 +1,205 @@
-# A Real-Time Predictive Emotion and Behavioral Analysis with Wellness Recommendations.
+# Real-Time Predictive Emotion and Behavioral Analysis with Wellness Recommendations
 
+> Deep learning system that reads emotions in real time and suggests what to do about them.
 
-## Project Overview:
+A CNN + LSTM pipeline that detects emotions from facial expressions via live camera feed, tracks behavioral patterns over time, and generates wellness recommendations based on detected emotional states. Built as a competitive entry for the IBM Z Datathon.
 
-This project aims to develop a deep learning-based system for real-time emotion and behavioral analysis using Convolutional Neural Networks (CNNs) and Long Short-Term Memory (LSTM) networks. The model identifies emotions such as anger, happiness, fear, and surprise through body language and facial expressions and provides wellness recommendations based on the detected emotions.
+**Model accuracy: 84.6% on held-out test set**
+**Google Colab notebook:** [Open in Colab](https://colab.research.google.com/drive/1ozkoEGtZzgDFYbT0mUx5nlBo3T5g84xW)
 
-## Key Features:
+---
 
-Emotion Detection: Recognizes various emotions using a camera feed and image processing techniques.
-Behavioral Analysis: Provides insights into emotional patterns over time, helping users manage mental well-being.
-Wellness Recommendations: Offers suggestions based on the identified emotions, e.g., stress-relief activities.
-Real-Time Feedback: Uses the model to monitor emotions continuously.
-Deep Learning Models: Employs CNNs for emotion detection and LSTMs to track behavioral changes over time.
+## How It Works
 
-## Dataset: 
-The dataset consists of grayscale images representing different emotions:
-Dataset link: https://www.kaggle.com/datasets/tapakah68/facial-emotion-recognition
+```
+Camera feed
+  |
+  v
+Frame capture (OpenCV)
+  |
+  v
+CNN — Spatial feature extraction
+  |    3x Conv2D + MaxPooling layers
+  |    Flatten + Dense + Dropout
+  |
+  v
+LSTM — Temporal behavioral tracking
+  |    Tracks emotion sequences over time
+  |    Identifies patterns (e.g., sustained stress)
+  |
+  v
+Softmax classifier
+  |    8 emotion classes
+  |
+  v
+Wellness recommendation engine
+       Maps detected emotion -> actionable suggestion
+```
 
-Classes: Anger, Contempt, Disgust, Fear, Happy, Neutral, Sad, Surprised.
-Image Size: 48x48 pixels, grayscale images.
-Ensure the dataset is structured in subdirectories for each emotion label, where each folder contains images associated with that emotion.
+---
 
-## Model Architecture:
+## Emotion Classes
 
-### CNN Layers:
-3 Convolutional layers with MaxPooling for feature extraction.
-Flattening layer to prepare for fully connected layers.
-Dense layers with ReLU activation.
-Dropout for regularization.
-Output Layer: Softmax activation for multi-class emotion prediction.
+| Class | Example wellness recommendation |
+|-------|--------------------------------|
+| Angry | Breathing exercises, 5-minute walk |
+| Sad | Mood journaling, uplifting playlist |
+| Fear | Grounding technique (5-4-3-2-1 method) |
+| Disgust | Reframing exercise, distraction activity |
+| Happy | Log the moment, share with someone |
+| Surprised | Pause and assess, mindful breathing |
+| Contempt | Perspective-taking prompt |
+| Neutral | Check-in prompt, hydration reminder |
 
-## Tech Stack:
-Programming Language: Python
-Libraries: TensorFlow, Keras, OpenCV, NumPy, Matplotlib, Seaborn, Scikit-learn
-Deep Learning Models: CNN (Convolutional Neural Networks), LSTM (Long Short-Term Memory)
-Training Platform: Google Colab, GPU-enabled for faster training.
+---
 
-## Performance:
+## Model Architecture
 
-Metrics – Accuracy, Categorical Cross Entropy Loss.
+### CNN (feature extractor)
 
-val_loss: 0.2984 - val_accuracy: 0.8462
+| Layer | Details |
+|-------|---------|
+| Conv2D (32 filters) | 3x3 kernel, ReLU, input: 48x48x1 |
+| MaxPooling2D | 2x2 |
+| Conv2D (64 filters) | 3x3 kernel, ReLU |
+| MaxPooling2D | 2x2 |
+| Conv2D (128 filters) | 3x3 kernel, ReLU |
+| MaxPooling2D | 2x2 |
+| Flatten | — |
+| Dense (256) | ReLU + Dropout |
+| Dense (8) | Softmax — emotion class probabilities |
 
-Test Loss: 0.29843610525131226
-Test Accuracy: 0.8461538553237915
+### LSTM (behavioral tracker)
 
-## Google collab page: https://colab.research.google.com/drive/1ozkoEGtZzgDFYbT0mUx5nlBo3T5g84xW#scrollTo=hlUNSKaT5WmX
+Sequences of CNN predictions are fed to an LSTM to capture temporal patterns — distinguishing a brief surprised expression from sustained fear, or tracking emotional drift over a session.
 
- ## linuxone server : http://148.100.108.81:38888/lab
+---
+
+## Performance
+
+| Metric | Value |
+|--------|-------|
+| Validation accuracy | **84.62%** |
+| Validation loss | 0.2984 |
+| Test accuracy | **84.62%** |
+| Test loss | 0.2984 |
+| Loss function | Categorical Cross-Entropy |
+| Optimizer | Adam |
+
+---
+
+## Dataset
+
+**Source:** [Facial Emotion Recognition — Kaggle](https://www.kaggle.com/datasets/tapakah68/facial-emotion-recognition)
+
+- 48x48 pixel grayscale images
+- 8 emotion classes: Anger, Contempt, Disgust, Fear, Happy, Neutral, Sad, Surprised
+- Organized in subdirectories per class label
+
+Download and place under `data/` with the following structure:
+
+```
+data/
+├── train/
+│   ├── angry/
+│   ├── contempt/
+│   ├── disgust/
+│   ├── fear/
+│   ├── happy/
+│   ├── neutral/
+│   ├── sad/
+│   └── surprised/
+└── test/
+    └── (same structure)
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.8+
+- GPU recommended (Google Colab with T4 runtime works well)
+
+### Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+Key dependencies: TensorFlow, Keras, OpenCV, NumPy, Matplotlib, Seaborn, Scikit-learn
+
+### Train the model
+
+Open `model.ipynb` in Jupyter or Google Colab and run all cells. The notebook:
+1. Loads and preprocesses the dataset
+2. Builds the CNN + LSTM architecture
+3. Trains with data augmentation
+4. Evaluates on the test set
+5. Saves the best model to `best_model.keras` and `best_model.h5`
+
+### Run predictions on an image
+
+```python
+python model.py
+```
+
+By default this runs inference on `predicition.jpg`. Modify `model.py` to point to any image or enable the webcam feed.
+
+### Real-time webcam inference
+
+```python
+import cv2
+import numpy as np
+from tensorflow.keras.models import load_model
+
+model = load_model('best_model.keras')
+emotions = ['Angry', 'Contempt', 'Disgust', 'Fear', 'Happy', 'Neutral', 'Sad', 'Surprised']
+
+cap = cv2.VideoCapture(0)
+while True:
+    ret, frame = cap.read()
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    face = cv2.resize(gray, (48, 48)) / 255.0
+    pred = model.predict(face.reshape(1, 48, 48, 1))
+    emotion = emotions[np.argmax(pred)]
+    cv2.putText(frame, emotion, (30, 60), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3)
+    cv2.imshow('EmotionCam', frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+cap.release()
+cv2.destroyAllWindows()
+```
+
+---
+
+## Tech Stack
+
+| Category | Tools |
+|---------|-------|
+| Language | Python |
+| Deep Learning | TensorFlow, Keras |
+| Computer Vision | OpenCV |
+| Data processing | NumPy, Scikit-learn |
+| Visualization | Matplotlib, Seaborn |
+| Training platform | Google Colab (GPU) |
+
+---
+
+## Project Files
+
+| File | Description |
+|------|-------------|
+| `model.ipynb` | Full training notebook with EDA, training, evaluation |
+| `model.py` | Standalone inference script |
+| `best_model.keras` | Saved model (Keras native format) |
+| `best_model.h5` | Saved model (HDF5 format, for compatibility) |
+| `requirements.txt` | Python dependencies |
+| `predicition.jpg` | Sample image for testing inference |
+
+---
+
+## License
+
+MIT
